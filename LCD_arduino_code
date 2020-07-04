@@ -1,0 +1,57 @@
+#include <LiquidCrystal.h>
+
+#include <RH_ASK.h>
+#include <SPI.h> 
+
+#define LEDpin 6
+
+RH_ASK rf_driver;
+const int rs = 9, en = 8, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+String distance;
+int percentage=0;
+int d=0;
+
+void setup() 
+{
+  rf_driver.init();
+  Serial.begin(9600);
+  lcd.begin(16, 2);
+  pinMode(LEDpin,OUTPUT); 
+}
+
+void loop() 
+{
+  lcd.clear();
+  lcd.print("Water(%):");
+  uint8_t buf[4];
+  uint8_t buflen = sizeof(buf);
+  if (rf_driver.recv(buf, &buflen))
+  {
+    distance=(char*)buf;
+    Serial.println(distance);
+  }
+  d=distance.toInt();
+  if(d<0)
+  {
+    d = 0;
+  }
+  else if(d>21)
+  {
+    d = 21;
+  }
+  percentage = (21-d)*100/21; //container size = 21
+  if (percentage<=20)
+  {
+    digitalWrite(LEDpin, HIGH);
+  }
+  else
+  {
+    digitalWrite(LEDpin, LOW);
+  }
+  lcd.setCursor(0, 1);
+  lcd.print(percentage);
+  //Serial.print(percentage);
+  //lcd.print(millis() / 1000);
+  delay(1000);
+}
